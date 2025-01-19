@@ -13,54 +13,45 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // Scaffold proporciona una estructura básica de pantalla, con AppBar, Body y otras áreas.
       home: Scaffold(
-        // Cuerpo de la pantalla
         body: const Center(
-          child: DateDisplay(), // Widget para mostrar la fecha actual en pantalla
+          child: DateDisplay(),
         ),
-
-        // Barra de navegación inferior
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white, // Color de fondo negro para la barra
-          selectedItemColor: Colors.black, // Color de los íconos seleccionados
-          unselectedItemColor: Colors.grey, // Color texto no seleccionado
-          // unselectedItemColor: Colors.grey, // Color de los íconos no seleccionados
+          backgroundColor: Colors.white,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.grey,
           items: [
-            // Ítem de navegación para "Home/Calendar"
             BottomNavigationBarItem(
               icon: Image.asset(
-                'assets/images/calendar-icon-navbar.png', // Ruta del archivo PNG
-                height: 24, // Altura del ícono
-                width: 24, // Ancho del ícono
+                'assets/images/calendar-icon-navbar.png',
+                height: 24,
+                width: 24,
               ),
               label: 'Home',
             ),
-            // Ítem de navegación para "Quotes"
             BottomNavigationBarItem(
               icon: Image.asset(
-                'assets/images/quotes-icon-navbar.png', // Ruta del archivo PNG
-                height: 24, // Altura del ícono
-                width: 24, // Ancho del ícono
+                'assets/images/quotes-icon-navbar.png',
+                height: 24,
+                width: 24,
               ),
               label: 'Quotes',
             ),
-            // Ítem de navegación para "Personal Journey"
             BottomNavigationBarItem(
               icon: Image.asset(
-                'assets/images/temple-icon-navbar.png', // Ruta del archivo PNG
-                height: 24, // Altura del ícono
-                width: 24, // Ancho del ícono
+                'assets/images/temple-icon-navbar.png',
+                height: 24,
+                width: 24,
               ),
               label: 'My journey',
             ),
-            // Ítem de navegación para "Profile"
             BottomNavigationBarItem(
               icon: Image.asset(
-                'assets/images/profile-icon-navbar.png', // Ruta del archivo PNG
-                height: 24, // Altura del ícono
-                width: 24, // Ancho del ícono
+                'assets/images/profile-icon-navbar.png',
+                height: 24,
+                width: 24,
               ),
               label: 'Profile',
             ),
@@ -81,6 +72,9 @@ class DateDisplay extends StatefulWidget {
 
 class _DateDisplayState extends State<DateDisplay> {
   String selectedFilter = 'Weekly';
+  String? selectedDay;
+  String? selectedMonth;
+  Map<int, String> reminders = {}; // Para guardar las notas de cada hora.
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +84,7 @@ class _DateDisplayState extends State<DateDisplay> {
 
     return Stack(
       children: [
+        // Fecha actual en el centro
         Positioned(
           top: 50,
           left: 0,
@@ -98,11 +93,13 @@ class _DateDisplayState extends State<DateDisplay> {
             '$day $month',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
+        
+        // Filtros de la vista (Weekly, Monthly, Annual)
         Positioned(
           top: 120,
           left: 20,
@@ -111,16 +108,15 @@ class _DateDisplayState extends State<DateDisplay> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildButton('Weekly'),
-              const SizedBox(width: 5),
-        
+              const SizedBox(width: 10),
               _buildButton('Monthly'),
-              const SizedBox(width: 5),
-             
+              const SizedBox(width: 10),
               _buildButton('Annual'),
             ],
           ),
         ),
 
+        // Vista semanal
         if (selectedFilter == 'Weekly')
           Positioned(
             top: 200,
@@ -130,56 +126,61 @@ class _DateDisplayState extends State<DateDisplay> {
               height: 80,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: 7, // Para los 7 días de la semana
+                itemCount: 7,
                 itemBuilder: (context, index) {
-                  final nextDay = now.add(Duration(days: index)); // Día específico
+                  final nextDay = now.add(Duration(days: index));
                   final dayName = DateFormat('EEE').format(nextDay);
                   final dayNumber = DateFormat('d').format(nextDay);
 
-                  // Verificar si el día actual es el que se debe resaltar
                   final isToday = nextDay.day == now.day &&
                                   nextDay.month == now.month &&
                                   nextDay.year == now.year;
 
+                  final isSelected = nextDay.day == int.tryParse(selectedDay ?? '');
+
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isToday ? Colors.black : Colors.transparent, // Fondo negro si es hoy
-                            borderRadius: BorderRadius.circular(8), // Bordes redondeados
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                          child: Column(
-                            children: [
-                              Text(
-                                dayName,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: isToday ? Colors.white : Colors.black, // Texto blanco si es hoy
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                dayNumber,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: isToday ? Colors.white : Colors.black, // Texto blanco si es hoy
-                                ),
-                              ),
-                            ],
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                          (states) {
+                            if (isSelected) return Colors.blue;
+                            return isToday ? Colors.black : Colors.grey[300]!;
+                          },
+                        ),
+                        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                          (states) => isSelected || isToday ? Colors.white : Colors.black,
+                        ),
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
-                      ],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedDay = dayNumber;
+                        });
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            dayName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(dayNumber),
+                        ],
+                      ),
                     ),
                   );
                 },
               ),
             ),
           ),
+
+        // Vista mensual
         if (selectedFilter == 'Monthly')
           Positioned(
             top: 200,
@@ -189,56 +190,61 @@ class _DateDisplayState extends State<DateDisplay> {
               height: 80,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: DateTime(now.year, now.month + 1, 0).day, // Todos los días del mes
+                itemCount: DateTime(now.year, now.month + 1, 0).day,
                 itemBuilder: (context, index) {
                   final currentDay = DateTime(now.year, now.month, index + 1);
                   final dayName = DateFormat('EEE').format(currentDay);
                   final dayNumber = DateFormat('d').format(currentDay);
 
-                  // Verificar si el día actual es el que se debe resaltar
                   final isToday = currentDay.day == now.day &&
                                   currentDay.month == now.month &&
                                   currentDay.year == now.year;
 
+                  final isSelected = currentDay.day == int.tryParse(selectedDay ?? '');
+
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isToday ? Colors.black : Colors.transparent, // Fondo negro si es hoy
-                            borderRadius: BorderRadius.circular(8), // Bordes redondeados
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                          child: Column(
-                            children: [
-                              Text(
-                                dayName,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: isToday ? Colors.white : Colors.black, // Texto blanco si es hoy
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                dayNumber,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: isToday ? Colors.white : Colors.black, // Texto blanco si es hoy
-                                ),
-                              ),
-                            ],
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                          (states) {
+                            if (isSelected) return Colors.blue;
+                            return isToday ? Colors.black : Colors.grey[300]!;
+                          },
+                        ),
+                        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                          (states) => isSelected || isToday ? Colors.white : Colors.black,
+                        ),
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
-                      ],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedDay = dayNumber;
+                        });
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            dayName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(dayNumber),
+                        ],
+                      ),
                     ),
                   );
                 },
               ),
             ),
           ),
+
+        // Vista anual
         if (selectedFilter == 'Annual')
           Positioned(
             top: 200,
@@ -248,53 +254,117 @@ class _DateDisplayState extends State<DateDisplay> {
               height: 80,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: 12, // 12 meses en el año
+                itemCount: 12,
                 itemBuilder: (context, index) {
-                  final monthAbbreviation = DateFormat('MMM').format(DateTime(now.year, index + 1));
+                  final monthName = DateFormat('MMMM').format(DateTime(now.year, index + 1));
                   final monthNumber = index + 1;
 
-                  // Verificar si el mes actual es el que se debe resaltar
                   final isThisMonth = monthNumber == now.month;
+                  final isSelected = monthNumber == int.tryParse(selectedMonth ?? '');
 
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isThisMonth ? Colors.black : Colors.transparent, // Fondo negro si es este mes
-                            borderRadius: BorderRadius.circular(8), // Bordes redondeados
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                          child: Column(
-                            children: [
-                              Text(
-                                monthAbbreviation,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: isThisMonth ? Colors.white : Colors.black, // Texto blanco si es este mes
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '$monthNumber',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: isThisMonth ? Colors.white : Colors.black, // Texto blanco si es este mes
-                                ),
-                              ),
-                            ],
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                          (states) {
+                            if (isSelected) return Colors.blue;
+                            return isThisMonth ? Colors.black : Colors.grey[300]!;
+                          },
+                        ),
+                        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                          (states) => isSelected || isThisMonth ? Colors.white : Colors.black,
+                        ),
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
-                      ],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedMonth = monthNumber.toString();
+                        });
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            monthName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('$monthNumber'),
+                        ],
+                      ),
                     ),
                   );
                 },
               ),
             ),
           ),
+        
+        // Mostrar horas y notas solo para Weekly y Monthly
+        if (selectedFilter == 'Weekly' || selectedFilter == 'Monthly')
+          if (selectedDay != null)
+            Positioned(
+              top: 300,
+              left: 0,
+              right: 0,
+              child: Column(
+                children: [
+                  Text(
+                    'Recordatorios para el día $selectedDay',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold, // Poner en negrita
+                      fontSize: 20, // Tamaño de la fuente
+                      color: const Color.fromARGB(255, 0, 0, 0), // Color blanco para contraste
+                    ),
+                  ),
+                  
+                  SizedBox(
+                    height: 490,
+                    child: ListView.builder(
+                      itemCount: 24, // Para mostrar todas las 24 horas
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${index + 1}:00',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold, // Poner en negrita
+                                  fontSize: 15, // Ajusta el tamaño de la fuente si es necesario
+                                  color: const Color.fromARGB(255, 0, 0, 0), // Color blanco para un mejor contraste
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              Expanded(
+                                child: TextField(
+                                  onChanged: (value) {
+                                    setState(() {
+                                      reminders[index] = value; // Guardar recordatorio
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Nota...',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
       ],
     );
   }
@@ -313,7 +383,7 @@ class _DateDisplayState extends State<DateDisplay> {
           foregroundColor: isSelected ? Colors.white : Colors.black,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
         child: Text(
